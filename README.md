@@ -73,6 +73,9 @@ Included shader files that use the dithering implementation:
 - `Dither3DCutout.shader`
 - `Dither3DParticleAdd.shader`
 - `Dither3DSkybox.shader`
+- `Dither3DOverlay.shader`
+
+`Dither3DOverlay.shader` is a GrabPass-based overlay that applies the dithering as a separate pass and supports blend modes such as Linear Burn and Linear Light.
 
 The dither shaders rely on a 3D texture with dither patterns. These come in several versions with different amounts of dots. In the materials using the dither shaders, you can freely switch between these 3D textures.
 
