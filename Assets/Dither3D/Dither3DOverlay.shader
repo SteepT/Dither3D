@@ -19,6 +19,8 @@ Shader "Dither 3D/Overlay"
         _BlackClampMix ("Black Clamp Mix", Range(0,1)) = 0
         _WhiteClampMix ("White Clamp Mix", Range(0,1)) = 0
 
+        _ReferenceRes ("Reference Screen Height", Float) = 1080
+
         [Header(Blend Mode)]
         _BlendMode ("Blend Mode", Int) = 0
     }
@@ -49,6 +51,11 @@ Shader "Dither 3D/Overlay"
 
             sampler2D _GrabTexture;
             int _BlendMode;
+            float _BlackPoint;
+            float _WhitePoint;
+            float _BlackClampMix;
+            float _WhiteClampMix;
+            float _ReferenceRes;
 
             fixed ProcessDitherChannel(fixed c, float2 uv, float4 screenPos, float2 dx, float2 dy)
             {
@@ -56,13 +63,15 @@ Shader "Dither 3D/Overlay"
                 {
                     float b = c / max(_BlackPoint, 1e-5);
                     fixed d = GetDither3D_(uv, screenPos, dx, dy, b).x;
-                    return c * (_BlackClampMix + (1 - _BlackClampMix) * d);
+                    float dithered = _BlackPoint * d;
+                    return lerp(dithered, c, _BlackClampMix);
                 }
                 else if (c > 1.0 - _WhitePoint)
                 {
                     float b = (c - (1.0 - _WhitePoint)) / max(_WhitePoint, 1e-5);
                     fixed d = GetDither3D_(uv, screenPos, dx, dy, b).x;
-                    return c + (1 - c) * d * (1 - _WhiteClampMix);
+                    float dithered = (1.0 - _WhitePoint) + _WhitePoint * d;
+                    return lerp(dithered, c, _WhiteClampMix);
                 }
                 else
                 {
@@ -96,8 +105,9 @@ Shader "Dither 3D/Overlay"
 
             fixed4 GetOverlayDitherColor(float2 uv_DitherTex, float4 screenPos, fixed4 color)
             {
-                float2 dx = ddx(uv_DitherTex);
-                float2 dy = ddy(uv_DitherTex);
+                float scale = _ScreenParams.y / _ReferenceRes;
+                float2 dx = ddx(uv_DitherTex) * scale;
+                float2 dy = ddy(uv_DitherTex) * scale;
                 return GetOverlayDitherColor_(uv_DitherTex, screenPos, dx, dy, color);
             }
 
