@@ -14,6 +14,8 @@ Shader "Dither 3D/Overlay"
         _SizeVariability ("Dot Size Variability", Range(0,1)) = 0
         _Contrast ("Dot Contrast", Range(0,2)) = 1
         _StretchSmoothness ("Stretch Smoothness", Range(0,2)) = 1
+        _ColorSteps ("Color Steps", Range(2,32)) = 8
+        _ScanlineIntensity ("Scanline Intensity", Range(0,1)) = 0
         _BlackPoint ("Black Dither Range", Range(0,0.5)) = 0.33
         _WhitePoint ("White Dither Range", Range(0,0.5)) = 0.33
         _BlackClampMix ("Black Clamp Mix", Range(0,1)) = 0
@@ -49,6 +51,8 @@ Shader "Dither 3D/Overlay"
 
             sampler2D _GrabTexture;
             int _BlendMode;
+            float _ColorSteps;
+            float _ScanlineIntensity;
 
             fixed ProcessDitherChannel(fixed c, float2 uv, float4 screenPos, float2 dx, float2 dy)
             {
@@ -127,6 +131,12 @@ Shader "Dither 3D/Overlay"
             {
                 fixed4 baseCol = tex2Dproj(_GrabTexture, UNITY_PROJ_COORD(i.screenPos));
                 fixed4 ditherCol = GetOverlayDitherColor(i.uv, i.screenPos, baseCol);
+                // Quantize colors to a limited palette
+                ditherCol.rgb = floor(ditherCol.rgb * _ColorSteps) / max(_ColorSteps - 1, 1);
+                // Apply CRT-style scanlines
+                float2 screenUV = i.screenPos.xy / i.screenPos.w;
+                float scan = 0.5 + 0.5 * cos(screenUV.y * UNITY_PI);
+                ditherCol.rgb *= lerp(1.0, scan, _ScanlineIntensity);
                 fixed4 result;
                 if (_BlendMode == 1)
                 {
