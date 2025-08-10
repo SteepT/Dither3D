@@ -132,7 +132,7 @@ Shader "Dither 3D/Overlay"
                 fixed4 baseCol = tex2Dproj(_GrabTexture, UNITY_PROJ_COORD(i.screenPos));
                 fixed4 ditherCol = GetOverlayDitherColor(i.uv, i.screenPos, baseCol);
                 // Quantize colors to a limited palette
-                ditherCol.rgb = floor(ditherCol.rgb * _ColorSteps) / max(_ColorSteps - 1, 1);
+                ditherCol.rgb = saturate(round(ditherCol.rgb * (_ColorSteps - 1)) / max(_ColorSteps - 1, 1));
                 // Apply CRT-style scanlines
                 float2 screenUV = i.screenPos.xy / i.screenPos.w;
                 float scan = 0.5 + 0.5 * cos(screenUV.y * UNITY_PI);
